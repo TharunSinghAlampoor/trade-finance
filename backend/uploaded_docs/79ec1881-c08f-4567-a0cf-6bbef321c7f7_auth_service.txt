@@ -1,0 +1,58 @@
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from app.schemas import RegisterIn, LoginIn, TokenOut
+from app.database import SessionLocal
+from app.models import User
+from app.services.user_service import register_user
+from app.auth import verify_password, create_access_token, create_refresh_token
+from app.deps import get_current_user
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+# ---------------- REGISTER (CORP ONLY) ----------------
+@router.post("/register")
+def register(data: RegisterIn):
+    db: Session = SessionLocal()
+    try:
+        return register_user(
+            db,
+            data.name,
+            data.email,
+            data.password,
+            data.org_name,
+        )
+    finally:
+        db.close()
+
+
+# ---------------- LOGIN ----------------
+@router.post("/login", response_model=TokenOut)
+def login(data: LoginIn):
+    db: Session = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == data.email).first()
+
+        if not user or not verify_password(data.password, user.password):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        return {
+            "access_token": create_access_token(user.id),
+            "refresh_token": create_refresh_token(user.id),
+            "token_type": "bearer",
+        }
+    finally:
+        db.close()
+
+
+# ---------------- ME (CURRENT USER) ----------------
+@router.get("/me")
+def get_me(user: User = Depends(get_current_user)):
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "org_id": user.org_id,
+    }

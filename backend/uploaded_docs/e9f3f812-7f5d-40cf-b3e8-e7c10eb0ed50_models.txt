@@ -1,0 +1,63 @@
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from app.database import Base
+
+
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+    org = relationship("Organization")
+
+    # ✅ ADDED
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # 🔒 REQUIRED DOCUMENT FIELDS
+    doc_type = Column(String, nullable=False)
+    doc_number = Column(String, nullable=False, unique=True)
+    file_url = Column(String, nullable=False)
+    hash = Column(String, nullable=False)
+    issued_at = Column(DateTime, nullable=False)
+
+    # OPTIONAL CONTENT
+    title = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+
+    # ROLE VISIBILITY
+    owner_role = Column(String, nullable=False, default="admin")
+    target_role = Column(String, nullable=False)
+
+    # RELATIONS
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+
+    # already existed (who created it)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # ✅ ADDED (who owns it logically)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    org = relationship("Organization")
+    creator = relationship("User", foreign_keys=[created_by])
+    owner = relationship("User", foreign_keys=[owner_id])

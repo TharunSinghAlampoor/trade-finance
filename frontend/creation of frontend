@@ -1,0 +1,24 @@
+frontend/
+│
+├── src/
+│   ├── api/
+│   │   └── axios.js
+│   │
+│   ├── pages/
+│   │   ├── Login.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── Documents.jsx
+│   │   ├── Users.jsx
+│   │   └── Profile.jsx
+│   │
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── index.css
+│
+└── package.json
+
+cd frontend
+npm install
+npm run dev
+
+http://localhost:5173

@@ -1,0 +1,141 @@
+MILESTONE - 2
+
+Create a Api for uploading our documents
+Uploading Should done with backend
+To store documents using PostgreSQL
+Upload any document like pdf word excel powerpoint like successfully uploaded create hash key for every uploaded document
+Either document can be same generate a error msg like already exist 
+All documents can be store in the document table
+In document table it should be have file name file url file id org and hash key
+Validation Process : In future if we are download or use documents to check same hash key or not
+If it is not same it is tampered
+
+
+
+┌────────────┐
+│  Frontend  │
+│ (React)    │
+└─────┬──────┘
+      │ JWT
+      ▼
+┌──────────────────────┐
+│ FastAPI Backend      │
+│                      │
+│ ┌───────────────┐   │
+│ │ Auth Layer     │◄──┘
+│ └───────────────┘
+│ ┌───────────────┐
+│ │ Access Control│
+│ └───────────────┘
+│ ┌───────────────┐
+│ │ Document API  │
+│ └───────────────┘
+│ ┌───────────────┐
+│ │ Hash Service  │
+│ └───────────────┘
+│ ┌───────────────┐
+│ │ Audit Logic   │
+│ └───────────────┘
+└───────┬──────────────┘
+        │
+        │ metadata
+        ▼
+┌──────────────────┐
+│ PostgreSQL DB    │
+│ (Truth Store)   │
+└──────────────────┘
+        ▲
+        │ file_path
+        │
+┌──────────────────┐
+│ File Storage     │
+│ (Local / S3)     │
+└──────────────────┘
+
+
+
+
+
+backend/
+│
+├── app/
+│   ├── main.py
+│   ├── database.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── deps.py
+│   ├── config.py
+│
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   ├── auth_routes.py        # HTTP only
+│   │   ├── user_routes.py        # HTTP only
+│   │   ├── docs_routes.py        # upload / download / verify
+│
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── auth_service.py       # password, JWT
+│   │   ├── user_service.py       # user creation logic
+│   │   ├── document_service.py   # 🔥 doc DB logic
+│   │   ├── file_service.py       # 🔥 hashing, save, verify
+│
+│   └── utils/
+│       ├── hash_utils.py          # SHA-256 helpers
+│
+├── uploaded_docs/                # binary files
+├── app.db
+├── requirements.txt
+├── .env
+└── .env.example
+
+Milestone-2 Logical Architecture (Layered)
+
+Client
+  ↓
+Router Layer (FastAPI)
+  ↓
+Service Layer (Business Rules)
+  ↓
+Database Layer (PostgreSQL)
+  ↓
+File Storage (Local FS)
+
+
+Milestone-2 Functional Architecture
+
+POST /documents/upload
+ → read file bytes
+ → generate SHA-256
+ → check hash in DB
+ → reject duplicate OR save file
+ → store metadata
+
+Document Verification Flow
+
+GET /documents/{id}/verify
+ → read stored file
+ → recompute hash
+ → compare with DB hash
+ → valid / tampered
+
+Document Download Flow
+
+GET /documents/{id}/download
+ → authenticate user
+ → role check
+ → org check
+ → read file from storage
+ → recompute SHA-256 hash
+ → compare with stored hash_key
+    ├─ mismatch → BLOCK download (tampered)
+    └─ match → stream file
+
+
+Correct Order (Milestone-2 Execution Order)
+
+1️⃣ Enforce hash_key in DB & model ← START HERE
+2️⃣ Implement hash generation function
+3️⃣ Add duplicate detection on upload
+4️⃣ Store file + metadata
+5️⃣ Enforce hash check during download
+6️⃣ (Optional) Add audit logging

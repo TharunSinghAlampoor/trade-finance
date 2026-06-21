@@ -1,0 +1,14 @@
+from app.database import SessionLocal
+from app.services.user_service import create_platform_admin
+
+
+def bootstrap_admin():
+    db = SessionLocal()
+    try:
+        create_platform_admin(
+            db=db,
+            email="admin@platform.com",
+            password="Admin@123",
+        )
+    finally:
+        db.close()

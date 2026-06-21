@@ -1,0 +1,230 @@
+import { useEffect, useState } from "react";
+import api from "../api/axios";
+
+export default function Profile({ me, setMe }) {
+  const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api
+      .get("/auth/me")
+      .then((res) => setMe(res.data))
+      .catch(() => setMe(null))
+      .finally(() => setLoading(false));
+  }, [setMe]);
+
+  const updatePassword = async () => {
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirm) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await api.put("/auth/change-password", { password });
+      setPassword("");
+      setConfirm("");
+      alert("Password updated");
+    } catch {
+      alert("Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="loading">Loading…</div>;
+  if (!me) return <div className="loading">Not authenticated</div>;
+
+  return (
+    <>
+      {/* ================= INLINE CSS ================= */}
+      <style>{`
+        body {
+          margin: 0;
+          background: #020617;
+          font-family: Inter, system-ui, sans-serif;
+        }
+
+        .page {
+          min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          padding: 60px 20px;
+          color: #e5e7eb;
+        }
+
+        .container {
+          width: 100%;
+          max-width: 520px;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+
+        .header {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          padding: 24px;
+          border-radius: 14px;
+          background: #020617;
+          border: 1px solid #1e293b;
+        }
+
+        .avatar {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #2563eb, #1e40af);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          font-weight: 700;
+          color: #fff;
+        }
+
+        .card {
+          background: #020617;
+          border: 1px solid #1e293b;
+          border-radius: 14px;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        h2 {
+          margin: 0;
+          color: #f8fafc;
+        }
+
+        p {
+          margin: 4px 0 8px;
+          color: #94a3b8;
+          font-size: 14px;
+        }
+
+        .field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        label {
+          font-size: 12px;
+          color: #94a3b8;
+        }
+
+        input {
+          padding: 12px;
+          border-radius: 10px;
+          border: 1px solid #334155;
+          background: #020617;
+          color: #e5e7eb;
+        }
+
+        input:disabled {
+          opacity: 0.75;
+        }
+
+        button {
+          margin-top: 10px;
+          padding: 12px;
+          border-radius: 12px;
+          border: none;
+          background: linear-gradient(135deg, #2563eb, #1e40af);
+          color: white;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .role {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .admin { background: #7c3aed; }
+        .bank { background: #16a34a; }
+        .corp { background: #0ea5e9; }
+        .auditor { background: #f59e0b; color: #000; }
+
+        .loading {
+          color: #94a3b8;
+          padding: 40px;
+        }
+      `}</style>
+
+      {/* ================= JSX ================= */}
+      <div className="page">
+        <div className="container">
+
+          <div className="header">
+            <div className="avatar">
+              {me.name?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2>{me.name}</h2>
+              <p>{me.email}</p>
+              <span className={`role ${me.role}`}>
+                {me.role.toUpperCase()}
+              </span>
+            </div>
+          </div>
+
+          <div className="card">
+            <Field label="Name" value={me.name} />
+            <Field label="Email" value={me.email} />
+            <Field label="Organization" value={me.org_name || me.org_id} />
+          </div>
+
+          <div className="card">
+            <h3>Change Password</h3>
+
+            <input
+              type="password"
+              placeholder="New password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <input
+              type="password"
+              placeholder="Confirm password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+
+            <button onClick={updatePassword} disabled={saving}>
+              {saving ? "Updating…" : "Update Password"}
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Field({ label, value }) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <input value={value || "-"} disabled />
+    </div>
+  );
+}

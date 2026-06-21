@@ -1,0 +1,26 @@
+from sqlalchemy.orm import Session
+from app.models import Document
+
+
+def create_doc(db: Session, title, content, user):
+    doc = Document(
+        title=title,
+        content=content,
+        org_id=user.org_id,
+        created_by=user.id
+    )
+
+    db.add(doc)
+    db.commit()
+    return doc
+
+
+def list_docs(db: Session, user):
+    if user.role == "admin":
+        return db.query(Document).all()
+
+    return (
+        db.query(Document)
+        .filter(Document.org_id == user.org_id)
+        .all()
+    )

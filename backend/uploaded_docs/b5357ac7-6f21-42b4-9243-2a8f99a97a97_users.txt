@@ -1,0 +1,245 @@
+import { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import api from "../api/axios";
+import {
+  User, Edit, Trash2, ShieldCheck, Landmark, Building2,
+  ClipboardCheck, Search, X, Plus, Hash, Mail, 
+  ArrowLeft, Database, Save, Fingerprint, Info, Globe, ShieldAlert
+} from "lucide-react";
+
+const ROLES = ["admin", "bank", "corp", "auditor"];
+
+const ROLE_ICONS = {
+  admin: ShieldCheck,
+  bank: Landmark,
+  corp: Building2,
+  auditor: ClipboardCheck,
+};
+
+export default function Users({ me }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState("list");
+  const [selected, setSelected] = useState(null);
+  const [viewDetails, setViewDetails] = useState(null); // Detail Modal State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeRoleFilter, setActiveRoleFilter] = useState(null);
+  const [message, setMessage] = useState(null);
+
+  const emptyForm = { name: "", email: "", password: "", role: "bank", org_id: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  const userRole = me?.role?.toLowerCase();
+  const isAdmin = userRole === "admin";
+  const isAuditor = userRole === "auditor";
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/user");
+      setUsers(res.data || []);
+    } catch {
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadUsers(); }, []);
+
+  const showMessage = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 4000);
+  };
+
+  if (userRole !== "admin" && userRole !== "auditor") {
+    return (
+      <div className="min-h-screen bg-[#05070a] flex items-center justify-center p-6 text-red-500 font-bold uppercase tracking-widest">
+        Access Denied: Administrative Clearance Required.
+      </div>
+    );
+  }
+
+  const createUser = async () => {
+    try {
+      await api.post("/user", form);
+      showMessage("success", "Subject initialized successfully.");
+      await loadUsers();
+      setMode("list");
+    } catch (err) {
+      showMessage("error", err?.response?.data?.detail || "Initialization failed.");
+    }
+  };
+
+  const updateUser = async () => {
+    try {
+      await api.put(`/user/${selected.id}`, form);
+      showMessage("success", "Credentials updated.");
+      await loadUsers();
+      setMode("list");
+    } catch {
+      showMessage("error", "Update failed.");
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("Permanently purge this user?")) return;
+    try {
+      await api.delete(`/user/${id}`);
+      showMessage("success", "Subject purged.");
+      loadUsers();
+    } catch {
+      showMessage("error", "Purge failed.");
+    }
+  };
+
+  const filteredUsers = users.filter((u) => {
+    const matchesRole = activeRoleFilter ? u.role === activeRoleFilter : true;
+    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesRole && matchesSearch;
+  });
+
+  return (
+    <div className="min-h-screen bg-[#05070a] text-slate-300 font-sans tracking-tight">
+      <Navbar me={me} />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,_#1e293b_0%,_transparent_50%)] pointer-events-none opacity-20" />
+      
+      {/* IDENTITY DETAILS MODAL */}
+      {viewDetails && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
+           <div className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl flex flex-col">
+              <div className="p-8 border-b border-white/5 bg-slate-900/50 flex justify-between items-start">
+                <div className="p-4 bg-cyan-500/10 text-cyan-500 rounded-2xl border border-cyan-500/20">
+                  <User size={32} />
+                </div>
+                <button onClick={() => setViewDetails(null)} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="p-8 space-y-8">
+                <div>
+                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mb-2">Subject Identity</p>
+                   <h2 className="text-3xl font-bold text-white tracking-tighter">{viewDetails.name}</h2>
+                   <div className="flex items-center gap-2 mt-2 text-cyan-400 font-medium text-sm">
+                      <Mail size={14} /> {viewDetails.email}
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                   <div className="p-5 bg-black/40 rounded-2xl border border-white/5">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase mb-2">Permission Tier</p>
+                      <div className="flex items-center gap-2 text-white font-bold capitalize">
+                         <ShieldCheck size={14} className="text-cyan-500" /> {viewDetails.role}
+                      </div>
+                   </div>
+                   <div className="p-5 bg-black/40 rounded-2xl border border-white/5">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase mb-2">Org Node</p>
+                      <div className="flex items-center gap-2 text-white font-mono font-bold">
+                         <Globe size={14} className="text-cyan-500" /> ORG-{String(viewDetails.org_id).padStart(3, '0')}
+                      </div>
+                   </div>
+                </div>
+
+                <div className="p-5 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex gap-4">
+                   <ShieldAlert size={20} className="text-amber-500 shrink-0" />
+                   <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Subject is bound to institutional access protocols. Unauthorized data sharing is logged via Global ID Hash: <span className="text-amber-200/50 font-mono">{btoa(viewDetails.email).substring(0, 12)}</span>.
+                   </p>
+                </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* TOAST SYSTEM */}
+      <div className="fixed top-24 right-6 z-50 w-80 space-y-4">
+        {message && (
+          <div className={`flex items-start gap-3 rounded-lg p-4 border shadow-2xl animate-in slide-in-from-right-full ${
+            message.type === "success" ? "bg-emerald-950/90 border-emerald-500/50 text-emerald-200" : "bg-red-950/90 border-red-500/50 text-red-200"
+          }`}>
+            <Info size={18} />
+            <p className="text-sm font-medium">{message.text}</p>
+          </div>
+        )}
+      </div>
+
+      <main className="relative p-6 lg:p-12 max-w-[1400px] mx-auto">
+        <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Database className="text-cyan-500" size={16} />
+              <span className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest">Protocol v4.0</span>
+            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tighter uppercase">Identity Console</h1>
+          </div>
+          {isAdmin && mode === "list" && (
+            <button onClick={() => { setMode("create"); setForm(emptyForm); }} className="bg-cyan-600 hover:bg-cyan-500 px-6 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-widest shadow-lg flex items-center gap-2">
+              <Plus size={18} /> Initialize Subject
+            </button>
+          )}
+        </header>
+
+        {/* ROLE DIRECTORY FILTERS */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <button onClick={() => setActiveRoleFilter(null)} className={`p-4 rounded-xl border text-left transition-all ${!activeRoleFilter ? 'bg-cyan-500/10 border-cyan-500/40 text-white' : 'bg-slate-900/40 border-white/5 text-slate-500'}`}>
+            <p className="text-[10px] font-bold uppercase opacity-50 mb-1">Clearance</p>
+            <p className="font-bold">ALL SUBJECTS</p>
+          </button>
+          {ROLES.map((r) => {
+            const Icon = ROLE_ICONS[r];
+            return (
+              <button key={r} onClick={() => setActiveRoleFilter(r)} className={`p-4 rounded-xl border text-left transition-all ${activeRoleFilter === r ? 'bg-cyan-500/10 border-cyan-500/40 text-white' : 'bg-slate-900/40 border-white/5 text-slate-500 hover:bg-white/5'}`}>
+                <Icon size={16} className="mb-2" />
+                <p className="text-[10px] font-bold uppercase opacity-50 mb-1">Partition</p>
+                <p className="font-bold capitalize">{r}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="space-y-6">
+          {/* TOOLBAR */}
+          <div className="bg-slate-900/60 p-4 border border-white/5 rounded-2xl backdrop-blur-md flex items-center gap-4">
+             <div className="relative flex-1 max-w-xl">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <input type="text" placeholder="Search identities..." className="w-full bg-[#0a0f18] border border-white/10 py-2.5 pl-11 pr-4 rounded-xl outline-none focus:border-cyan-500 text-sm text-white" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+             </div>
+          </div>
+
+          {/* USER GRID - WITH CLICK ACTION */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredUsers.map((u) => {
+              const RoleIcon = ROLE_ICONS[u.role] || User;
+              return (
+                <div key={u.id} onClick={() => setViewDetails(u)} className="group bg-[#0d121f] border border-white/5 p-6 rounded-2xl hover:border-cyan-500/30 transition-all shadow-md cursor-pointer flex flex-col">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="p-2.5 bg-slate-900 text-cyan-500 rounded-xl border border-white/5"><RoleIcon size={20} /></div>
+                    {isAdmin && (
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => { setSelected(u); setForm({...u, password: ""}); setMode("edit"); }} className="p-1.5 hover:bg-white/5 text-slate-500 hover:text-cyan-500 rounded-lg"><Edit size={16} /></button>
+                        <button onClick={() => deleteUser(u.id)} className="p-1.5 hover:bg-white/5 text-slate-500 hover:text-red-500 rounded-lg"><Trash2 size={16} /></button>
+                      </div>
+                    )}
+                  </div>
+                  <h4 className="text-base font-bold text-white truncate">{u.name}</h4>
+                  <p className="text-[11px] text-slate-500 font-medium truncate mb-4">{u.email}</p>
+                  <div className="mt-auto space-y-2 pt-3 border-t border-white/5">
+                     <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-slate-500 uppercase">Clearance</span>
+                        <span className="text-cyan-500 uppercase">{u.role}</span>
+                     </div>
+                     <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-slate-500 uppercase">Org Node</span>
+                        <span className="text-slate-300 font-mono">ORG-{String(u.org_id).padStart(3, '0')}</span>
+                     </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

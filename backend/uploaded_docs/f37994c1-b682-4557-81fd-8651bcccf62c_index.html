@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIBGYOR Login</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom Keyframes for Gradient Animation */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .animated-background {
+            background: linear-gradient(-45deg, #8b5cf6, #3b82f6, #06b6d4, #10b981, #facc15, #f97316, #ef4444);
+            background-size: 400% 400%;
+            animation: gradient-animation 15s ease infinite;
+        }
+
+        /* Custom Keyframes for Fade-in Effect */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in-on-load {
+            animation: fade-in 0.8s ease-out forwards;
+        }
+
+        /* VIBGYOR Button Gradient */
+        .vibgyor-button {
+            background-image: linear-gradient(to right, #8b5cf6, #3b82f6, #06b6d4, #10b981, #facc15, #f97316, #ef4444);
+            background-size: 200% auto;
+            transition: background-position 0.5s ease;
+        }
+
+        .vibgyor-button:hover {
+            background-position: right center;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="animated-background flex items-center justify-center min-h-screen p-4 text-white">
+
+    <!-- Login Card Container -->
+    <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-sm p-8 space-y-6 transform fade-in-on-load">
+
+        <!-- Header -->
+        <div class="text-center" id="form-header">
+            <h1 class="text-3xl font-bold text-gray-900">Welcome Back</h1>
+            <p class="text-gray-700 mt-2">Sign in to your account</p>
+        </div>
+
+        <!-- Login Form -->
+        <div id="login-form-container">
+            <form id="login-form" class="space-y-4 mb-6">
+                <!-- Email Input -->
+                <div>
+                    <label for="email" class="block text-base font-bold text-gray-700">Email address</label>
+                    <div class="mt-1">
+                        <input id="email" name="email" type="email" autocomplete="email" required
+                               class="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-bold transition duration-300">
+                    </div>
+                </div>
+
+                <!-- Password Input with Toggle -->
+                <div>
+                    <label for="password" class="block text-base font-bold text-gray-700">Password</label>
+                    <div class="mt-1 relative rounded-lg shadow-sm">
+                        <input id="password" name="password" type="password" autocomplete="current-password" required
+                               class="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-bold pr-10 transition duration-300">
+                        <button type="button" id="password-toggle" class="absolute inset-y-0 right-0 pr-3 flex items-center text-base leading-5 text-gray-500 transition-colors duration-200 hover:text-gray-900" aria-label="Toggle password visibility">
+                            <!-- Eye open icon SVG -->
+                            <svg id="eye-open" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-.173.666-.345 1.332-.516 2M12 20c-4.478 0-8.268-2.943-9.542-7 .173-.666.345-1.332.516-2" />
+                            </svg>
+                            <!-- Eye closed icon SVG (initially hidden) -->
+                            <svg id="eye-closed" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.25v-2.75a.875.875 0 011.75 0v2.75a.875.875 0 01-1.75 0zM12 20.5a.75.75 0 01-.75.75h-.5a.75.75 0 010-1.5h.5a.75.75 0 01.75.75zM4.75 14.75h14.5a.75.75 0 010 1.5H4.75a.75.75 0 010-1.5z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between">
+                    <button type="button" id="forgot-password-btn" class="text-base text-blue-600 hover:text-blue-500 font-bold transition-colors duration-200">Forgot password?</button>
+                    <button type="button" id="create-account-btn" class="text-base text-blue-600 hover:text-blue-500 font-bold transition-colors duration-200">Create new account</button>
+                </div>
+
+                <!-- Get Started Button -->
+                <div>
+                    <button type="submit" id="login-submit-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        Get Started
+                    </button>
+                </div>
+            </form>
+
+            <!-- Separator -->
+            <div class="relative mt-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-base">
+                    <span class="px-2 bg-white text-gray-700 font-bold">Or continue with</span>
+                </div>
+            </div>
+
+            <!-- Social Login Buttons -->
+            <div class="flex flex-col space-y-6 w-full mt-6">
+                <!-- Google -->
+                <button type="button" id="google-btn" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg shadow-sm text-base font-bold text-gray-900 bg-white hover:shadow-lg transition-shadow duration-200">
+                    <!-- Google SVG -->
+                    <svg class="h-5 w-5" viewBox="0 0 48 48" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#4285F4" d="M24 10.95c3.31 0 5.99 1.4 7.97 3.23l4.98-4.98C33.91 5.9 29.58 4 24 4 15.65 4 8.5 8.71 4.54 16.03l6.6 5.1C12.38 15.42 17.55 10.95 24 10.95z"/>
+                        <path fill="#34A853" d="M4.54 16.03l6.6 5.1C12.38 15.42 17.55 10.95 24 10.95c3.31 0 5.99 1.4 7.97 3.23l4.98-4.98C33.91 5.9 29.58 4 24 4 15.65 4 8.5 8.71 4.54 16.03z"/>
+                        <path fill="#FBBC05" d="M24 29.05c-5.46 0-9.67-2.9-12.03-7.23l-6.6 5.1C8.5 39.29 15.65 44 24 44c8.45 0 15.5-4.71 19.46-12.03l-6.6-5.1c-2.36 4.33-6.57 7.23-12.86 7.23z"/>
+                        <path fill="#EA4335" d="M43.24 18.06h-19.24v6.86h11.75c-.65 2.16-2.52 3.99-5.11 5.1v6.86h8.84C42.02 33.3 45 28.16 45 24c0-2.31-.38-4.51-.97-6.54z"/>
+                    </svg>
+                    <span>Google</span>
+                </button>
+                
+                <!-- Twitter -->
+                <button type="button" id="twitter-btn" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg shadow-sm text-base font-bold text-white bg-black hover:shadow-lg transition-shadow duration-200">
+                    <!-- Twitter SVG -->
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.244 2.25h3.308l-7.227 8.261L21.624 21.75h-2.96L12.784 13.91L6.647 21.75H3.337l7.635-9.157L2.56 2.25H5.877l6.51 7.426L18.244 2.25zm-3.645 15.25l-6.49-7.426l-.42 0L5.342 4.09H3.725l6.49 7.426l.42 0L17.203 19.91h1.618l-6.49-7.426z" />
+                    </svg>
+                    <span>Twitter</span>
+                </button>
+                
+                <!-- Microsoft -->
+                <button type="button" id="microsoft-btn" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg shadow-sm text-base font-bold text-gray-900 bg-white hover:shadow-lg transition-shadow duration-200">
+                    <!-- Microsoft SVG -->
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#F25022" d="M2.5 2.5h9v9h-9z"/>
+                        <path fill="#7FBA00" d="M12.5 2.5h9v9h-9z"/>
+                        <path fill="#00A4EF" d="M2.5 12.5h9v9h-9z"/>
+                        <path fill="#FFB900" d="M12.5 12.5h9v9h-9z"/>
+                    </svg>
+                    <span>Microsoft</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Create Account Form (initially hidden) -->
+        <div id="create-account-container" class="hidden">
+            <form id="create-account-form" class="space-y-4">
+                <p class="text-base text-gray-700 font-bold">Enter your email to create a new account.</p>
+                <!-- Email Input -->
+                <div>
+                    <label for="new-email" class="block text-base font-bold text-gray-700">Email address</label>
+                    <div class="mt-1">
+                        <input id="new-email" name="new-email" type="email" autocomplete="email" required
+                               class="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-bold transition duration-300">
+                    </div>
+                </div>
+                <!-- Send OTP Button -->
+                <div>
+                    <button type="submit" id="send-otp-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        Send OTP
+                    </button>
+                </div>
+                <div class="mt-4 text-center">
+                    <button type="button" id="back-to-login-from-create-btn" class="text-base text-blue-600 hover:text-blue-500 font-bold transition-colors duration-200">Back to Login</button>
+                </div>
+            </form>
+
+            <!-- OTP Form (initially hidden) -->
+            <div id="otp-form-container" class="hidden mt-4 space-y-4">
+                <p class="text-base text-gray-700 font-bold">We've sent a 6-digit code to your email.</p>
+                <form id="otp-form" class="space-y-4">
+                    <div>
+                        <label for="otp" class="block text-base font-bold text-gray-700">Enter OTP</label>
+                        <div class="mt-1">
+                            <input id="otp" name="otp" type="text" pattern="\d{6}" maxlength="6" required
+                                   class="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-bold transition duration-300">
+                        </div>
+                        <p id="otp-error-message" class="mt-2 text-base text-red-600 font-bold hidden">Invalid OTP. Please try again.</p>
+                    </div>
+                    <div>
+                        <button type="submit" id="verify-otp-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            Get Started
+                        </button>
+                    </div>
+                </form>
+                <button type="button" id="back-to-login-btn" class="w-full text-base text-center text-blue-600 hover:text-blue-500 mt-4 transition-colors duration-200">Back to Login</button>
+            </div>
+            
+            <!-- Success Message (initially hidden) -->
+            <div id="success-message" class="hidden text-center mt-4">
+                <h2 class="text-2xl font-bold text-green-600">Success!</h2>
+                <p class="mt-2 text-base text-gray-700 font-bold">Your account has been created. You can now log in.</p>
+                <button type="button" id="back-to-login-from-success-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 mt-4">
+                    Back to Login
+                </button>
+            </div>
+        </div>
+
+        <!-- Forgot Password Form (initially hidden) -->
+        <div id="forgot-password-container" class="hidden">
+            <form id="forgot-password-form" class="space-y-4">
+                <p class="text-base text-gray-700 font-bold">Enter your email to reset your password.</p>
+                <!-- Email Input -->
+                <div>
+                    <label for="forgot-email" class="block text-base font-bold text-gray-700">Email address</label>
+                    <div class="mt-1">
+                        <input id="forgot-email" name="forgot-email" type="email" autocomplete="email" required
+                               class="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-bold transition duration-300">
+                    </div>
+                </div>
+                <!-- Send OTP Button -->
+                <div>
+                    <button type="submit" id="send-forgot-otp-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        Send OTP
+                    </button>
+                </div>
+                <div class="mt-4 text-center">
+                    <button type="button" id="back-to-login-from-forgot-btn" class="text-base text-blue-600 hover:text-blue-500 font-bold transition-colors duration-200">Back to Login</button>
+                </div>
+            </form>
+
+            <!-- Forgot Password OTP Form (initially hidden) -->
+            <div id="forgot-otp-form-container" class="hidden mt-4 space-y-4">
+                <p class="text-base text-gray-700 font-bold">We've sent a 6-digit code to your email.</p>
+                <form id="forgot-otp-form" class="space-y-4">
+                    <div>
+                        <label for="forgot-otp" class="block text-base font-bold text-gray-700">Enter OTP</label>
+                        <div class="mt-1">
+                            <input id="forgot-otp" name="forgot-otp" type="text" pattern="\d{6}" maxlength="6" required
+                                   class="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-bold transition duration-300">
+                        </div>
+                        <p id="forgot-otp-error-message" class="mt-2 text-base text-red-600 font-bold hidden">Invalid OTP. Please try again.</p>
+                    </div>
+                    <div>
+                        <button type="submit" id="verify-forgot-otp-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            Reset Password
+                        </button>
+                    </div>
+                </form>
+                <button type="button" id="back-to-login-from-forgot-btn-otp" class="w-full text-base text-center text-blue-600 hover:text-blue-500 mt-4 transition-colors duration-200">Back to Login</button>
+            </div>
+            
+            <!-- Forgot Password Success Message (initially hidden) -->
+            <div id="forgot-success-message" class="hidden text-center mt-4">
+                <h2 class="text-2xl font-bold text-green-600">Success!</h2>
+                <p class="mt-2 text-base text-gray-700 font-bold">Your password has been reset. You can now log in with a new password.</p>
+                <button type="button" id="back-to-login-from-forgot-success-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 mt-4">
+                    Back to Login
+                </button>
+            </div>
+        </div>
+
+        <!-- Social Login Success Message (initially hidden) -->
+        <div id="social-login-success" class="hidden text-center mt-4">
+            <h2 class="text-2xl font-bold text-green-600">Login Successful!</h2>
+            <p id="social-login-message" class="mt-2 text-base text-gray-700 font-bold"></p>
+            <button type="button" id="back-to-login-from-social-success-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white vibgyor-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 mt-4">
+                Back to Login
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginFormContainer = document.getElementById('login-form-container');
+            const createAccountContainer = document.getElementById('create-account-container');
+            const forgotPasswordContainer = document.getElementById('forgot-password-container');
+            const socialLoginSuccessContainer = document.getElementById('social-login-success');
+
+            const createAccountBtn = document.getElementById('create-account-btn');
+            const forgotPasswordBtn = document.getElementById('forgot-password-btn');
+
+            const sendOtpBtn = document.getElementById('send-otp-btn');
+            const otpFormContainer = document.getElementById('otp-form-container');
+            const verifyOtpBtn = document.getElementById('verify-otp-btn');
+            const backToLoginFromCreateBtn = document.getElementById('back-to-login-from-create-btn');
+            const backToLoginBtn = document.getElementById('back-to-login-btn');
+            const backToLoginFromSuccessBtn = document.getElementById('back-to-login-from-success-btn');
+            const successMessage = document.getElementById('success-message');
+
+            const sendForgotOtpBtn = document.getElementById('send-forgot-otp-btn');
+            const forgotOtpFormContainer = document.getElementById('forgot-otp-form-container');
+            const verifyForgotOtpBtn = document.getElementById('verify-forgot-otp-btn');
+            const backToLoginFromForgotBtn = document.getElementById('back-to-login-from-forgot-btn');
+            const backToLoginFromForgotOtpBtn = document.getElementById('back-to-login-from-forgot-btn-otp');
+            const backToLoginFromForgotSuccessBtn = document.getElementById('back-to-login-from-forgot-success-btn');
+            const forgotSuccessMessage = document.getElementById('forgot-success-message');
+
+            const googleBtn = document.getElementById('google-btn');
+            const twitterBtn = document.getElementById('twitter-btn');
+            const microsoftBtn = document.getElementById('microsoft-btn');
+            const socialLoginMessage = document.getElementById('social-login-message');
+            const backToLoginFromSocialSuccessBtn = document.getElementById('back-to-login-from-social-success-btn');
+
+
+            const newEmailInput = document.getElementById('new-email');
+            const otpInput = document.getElementById('otp');
+            const otpErrorMessage = document.getElementById('otp-error-message');
+            const forgotEmailInput = document.getElementById('forgot-email');
+            const forgotOtpInput = document.getElementById('forgot-otp');
+            const forgotOtpErrorMessage = document.getElementById('forgot-otp-error-message');
+
+            // Hardcoded OTP for demonstration purposes
+            const correctOtp = "123456";
+
+            // Function to reset all forms and show the main login form
+            const showLoginForm = () => {
+                loginFormContainer.classList.remove('hidden');
+                createAccountContainer.classList.add('hidden');
+                forgotPasswordContainer.classList.add('hidden');
+                socialLoginSuccessContainer.classList.add('hidden');
+                successMessage.classList.add('hidden');
+                forgotSuccessMessage.classList.add('hidden');
+                otpFormContainer.classList.add('hidden');
+                forgotOtpFormContainer.classList.add('hidden');
+                document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-gray-900">Welcome Back</h1><p class="text-gray-700 mt-2">Sign in to your account</p>`;
+            };
+
+            // Password toggle logic for the main login form
+            const passwordInput = document.getElementById('password');
+            const passwordToggle = document.getElementById('password-toggle');
+            const eyeOpen = document.getElementById('eye-open');
+            const eyeClosed = document.getElementById('eye-closed');
+
+            if (passwordToggle) {
+                passwordToggle.addEventListener('click', () => {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    if (type === 'password') {
+                        eyeOpen.classList.remove('hidden');
+                        eyeClosed.classList.add('hidden');
+                    } else {
+                        eyeOpen.classList.add('hidden');
+                        eyeClosed.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // Show create account form
+            createAccountBtn.addEventListener('click', () => {
+                loginFormContainer.classList.add('hidden');
+                forgotPasswordContainer.classList.add('hidden');
+                socialLoginSuccessContainer.classList.add('hidden');
+                createAccountContainer.classList.remove('hidden');
+                document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-gray-900">Create Account</h1><p class="text-gray-700 mt-2">Enter your email to get started</p>`;
+            });
+
+            // Show forgot password form
+            forgotPasswordBtn.addEventListener('click', () => {
+                loginFormContainer.classList.add('hidden');
+                createAccountContainer.classList.add('hidden');
+                socialLoginSuccessContainer.classList.add('hidden');
+                forgotPasswordContainer.classList.remove('hidden');
+                document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-gray-900">Forgot Password</h1><p class="text-gray-700 mt-2">Enter your email to reset it</p>`;
+            });
+
+            // Handle Login Form submission
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                // Simulate API call
+                const loginSubmitBtn = document.getElementById('login-submit-btn');
+                loginSubmitBtn.innerHTML = `<svg class="spinner h-5 w-5 mr-2" viewBox="0 0 24 24"></svg> Logging in...`;
+                loginSubmitBtn.disabled = true;
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Simulate API response
+                if (email && password) {
+                    loginFormContainer.classList.add('hidden');
+                    socialLoginSuccessContainer.classList.remove('hidden');
+                    socialLoginMessage.textContent = `You have been successfully logged in with email: ${email}.`;
+                    document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-green-600">Login Successful!</h1>`;
+                } else {
+                    // This is just for demonstration, real apps would show an error message.
+                    console.error("Login failed: invalid credentials.");
+                }
+
+                loginSubmitBtn.innerHTML = `Get Started`;
+                loginSubmitBtn.disabled = false;
+            });
+
+            // Handle Send OTP button click for new account
+            document.getElementById('create-account-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newEmail = newEmailInput.value;
+                
+                // Simulate API call
+                sendOtpBtn.innerHTML = `<svg class="spinner h-5 w-5 mr-2" viewBox="0 0 24 24"></svg> Sending...`;
+                sendOtpBtn.disabled = true;
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                if (newEmail) {
+                    console.log(`Simulating OTP sent to ${newEmail}. The OTP is ${correctOtp}`);
+                    otpFormContainer.classList.remove('hidden');
+                    document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-gray-900">Verify OTP</h1><p class="text-gray-700 mt-2">Enter the code sent to your email</p>`;
+                }
+                
+                sendOtpBtn.innerHTML = `Send OTP`;
+                sendOtpBtn.disabled = false;
+            });
+
+            // Handle Verify OTP button click for new account
+            document.getElementById('otp-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const enteredOtp = otpInput.value;
+
+                // Simulate API call
+                verifyOtpBtn.innerHTML = `<svg class="spinner h-5 w-5 mr-2" viewBox="0 0 24 24"></svg> Verifying...`;
+                verifyOtpBtn.disabled = true;
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                if (enteredOtp === correctOtp) {
+                    otpErrorMessage.classList.add('hidden');
+                    createAccountContainer.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                    document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-green-600">Success!</h1>`;
+                } else {
+                    otpErrorMessage.classList.remove('hidden');
+                }
+                
+                verifyOtpBtn.innerHTML = `Get Started`;
+                verifyOtpBtn.disabled = false;
+            });
+
+            // Handle Send OTP button click for forgot password
+            document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const forgotEmail = forgotEmailInput.value;
+                
+                // Simulate API call
+                sendForgotOtpBtn.innerHTML = `<svg class="spinner h-5 w-5 mr-2" viewBox="0 0 24 24"></svg> Sending...`;
+                sendForgotOtpBtn.disabled = true;
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                if (forgotEmail) {
+                    console.log(`Simulating OTP sent to ${forgotEmail}. The OTP is ${correctOtp}`);
+                    forgotOtpFormContainer.classList.remove('hidden');
+                    document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-gray-900">Verify OTP</h1><p class="text-gray-700 mt-2">Enter the code sent to your email</p>`;
+                }
+
+                sendForgotOtpBtn.innerHTML = `Send OTP`;
+                sendForgotOtpBtn.disabled = false;
+            });
+
+            // Handle Verify OTP button click for forgot password
+            document.getElementById('forgot-otp-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const enteredOtp = forgotOtpInput.value;
+                
+                // Simulate API call
+                verifyForgotOtpBtn.innerHTML = `<svg class="spinner h-5 w-5 mr-2" viewBox="0 0 24 24"></svg> Verifying...`;
+                verifyForgotOtpBtn.disabled = true;
+                
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                if (enteredOtp === correctOtp) {
+                    forgotOtpErrorMessage.classList.add('hidden');
+                    forgotPasswordContainer.classList.add('hidden');
+                    forgotSuccessMessage.classList.remove('hidden');
+                    document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-green-600">Success!</h1>`;
+                } else {
+                    forgotOtpErrorMessage.classList.remove('hidden');
+                }
+                
+                verifyForgotOtpBtn.innerHTML = `Reset Password`;
+                verifyForgotOtpBtn.disabled = false;
+            });
+
+            // Social Login handlers (Simulated)
+            const handleSocialLogin = (provider) => {
+                loginFormContainer.classList.add('hidden');
+                createAccountContainer.classList.add('hidden');
+                forgotPasswordContainer.classList.add('hidden');
+                socialLoginSuccessContainer.classList.remove('hidden');
+                socialLoginMessage.textContent = `You have been successfully logged in with ${provider}. A real-world application would use a backend server to handle this authentication flow.`;
+                document.getElementById('form-header').innerHTML = `<h1 class="text-3xl font-bold text-green-600">Login Successful!</h1>`;
+            };
+
+            googleBtn.addEventListener('click', () => handleSocialLogin('Google'));
+            twitterBtn.addEventListener('click', () => handleSocialLogin('Twitter'));
+            microsoftBtn.addEventListener('click', () => handleSocialLogin('Microsoft'));
+            
+            // Back to login buttons
+            backToLoginBtn.addEventListener('click', showLoginForm);
+            backToLoginFromCreateBtn.addEventListener('click', showLoginForm);
+            backToLoginFromSuccessBtn.addEventListener('click', showLoginForm);
+            backToLoginFromForgotBtn.addEventListener('click', showLoginForm);
+            backToLoginFromForgotOtpBtn.addEventListener('click', showLoginForm);
+            backToLoginFromForgotSuccessBtn.addEventListener('click', showLoginForm);
+            backToLoginFromSocialSuccessBtn.addEventListener('click', showLoginForm);
+        });
+    </script>
+</body>
+</html>

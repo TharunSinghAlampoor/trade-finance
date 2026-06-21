@@ -1,0 +1,402 @@
+import { useEffect, useState } from "react";
+import api from "../api/axios";
+
+export default function Trades() {
+  const [me, setMe] = useState(null);
+  const [trades, setTrades] = useState([]);
+
+  const [createForm, setCreateForm] = useState({
+    buyer_email: "",
+    seller_email: "",
+    description: "",
+    amount: "",
+    currency: "USD",
+    remarks: "",
+    expected_completion_date: "",
+  });
+
+  const [assign, setAssign] = useState({ tradeId: null, bankEmail: "" });
+
+  const [remarkModal, setRemarkModal] = useState({
+    tradeId: null,
+    action: "",
+    remarks: "",
+  });
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function load() {
+    const meRes = await api.get("/auth/me");
+    const tradesRes = await api.get("/trades");
+
+    setMe(meRes.data);
+    setTrades(tradesRes.data);
+
+    setCreateForm((p) => ({
+      ...p,
+      buyer_email: meRes.data.email,
+    }));
+  }
+
+  /* ================= ROLES ================= */
+  const isCorp = () => me.role === "corp";
+  const isBank = () => me.role === "bank";
+  const isAdmin = () => me.role === "admin";
+
+  const isBuyer = (t) => isCorp() && t.buyer_id === me.id;
+  const isSeller = (t) => isCorp() && t.seller_id === me.id;
+  const isAssignedBank = (t) => isBank() && t.bank_id === me.id;
+
+  /* ================= DASHBOARD COUNTS (ADDED) ================= */
+  const statusCounts = trades.reduce(
+    (acc, t) => {
+      acc.total += 1;
+      acc[t.status] = (acc[t.status] || 0) + 1;
+      return acc;
+    },
+    { total: 0 }
+  );
+
+  /* ================= TRADE HISTORY FILTER (ADDED) ================= */
+  const historyStatuses = ["completed", "rejected", "disputed"];
+  const tradeHistory = trades.filter((t) =>
+    historyStatuses.includes(t.status)
+  );
+
+  /* ================= CREATE TRADE ================= */
+  async function createTrade(e) {
+    e.preventDefault();
+
+    if (!createForm.expected_completion_date) {
+      alert("Expected completion date is required");
+      return;
+    }
+
+    const res = await api.post("/trades", null, {
+      params: {
+        buyer_email: createForm.buyer_email,
+        seller_email: createForm.seller_email,
+        description: createForm.description,
+        amount: Number(createForm.amount),
+        currency: createForm.currency,
+        remarks: createForm.remarks || undefined,
+      },
+    });
+
+    const tradeId = res.data.id;
+
+    await api.patch(`/trades/${tradeId}/expected-date`, {
+      expected_completion_date: createForm.expected_completion_date,
+    });
+
+    setCreateForm({
+      buyer_email: me.email,
+      seller_email: "",
+      description: "",
+      amount: "",
+      currency: "USD",
+      remarks: "",
+      expected_completion_date: "",
+    });
+
+    load();
+  }
+
+  /* ================= ASSIGN BANK ================= */
+  async function assignBank(e) {
+    e.preventDefault();
+
+    await api.put(`/trades/${assign.tradeId}/assign-bank`, null, {
+      params: { bank_email: assign.bankEmail },
+    });
+
+    setAssign({ tradeId: null, bankEmail: "" });
+    load();
+  }
+
+  /* ================= STATUS UPDATE ================= */
+  async function submitRemarkAction(e) {
+    e.preventDefault();
+
+    await api.put(`/trades/${remarkModal.tradeId}/status`, null, {
+      params: {
+        new_status: remarkModal.action,
+        remarks: remarkModal.remarks,
+      },
+    });
+
+    setRemarkModal({ tradeId: null, action: "", remarks: "" });
+    load();
+  }
+
+  /* ================= CONFIRM EXPECTED DATE ================= */
+  async function confirmExpectedDate(tradeId) {
+    await api.patch(`/trades/${tradeId}/expected-date/confirm`, {});
+    load();
+  }
+
+  if (!me) return <div>Loading…</div>;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>Trades</h2>
+      <p>
+        Logged in as <b>{me.email}</b> ({me.role})
+      </p>
+
+      {/* ================= DASHBOARD (ADDED) ================= */}
+      <div style={box}>
+        <h3>Trade Dashboard</h3>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+          <DashCard label="Total" value={statusCounts.total} />
+          <DashCard label="Initiated" value={statusCounts.initiated || 0} />
+          <DashCard label="Seller Accepted" value={statusCounts.seller_confirmed || 0} />
+          <DashCard label="Documents Uploaded" value={statusCounts.documents_uploaded || 0} />
+          <DashCard label="Bank Approved" value={statusCounts.bank_approved || 0} />
+          <DashCard label="Payment Released" value={statusCounts.payment_released || 0} />
+          <DashCard label="Completed" value={statusCounts.completed || 0} />
+          <DashCard label="Rejected" value={statusCounts.rejected || 0} />
+          <DashCard label="Disputed" value={statusCounts.disputed || 0} />
+        </div>
+      </div>
+
+      {/* ================= CREATE TRADE ================= */}
+      {isCorp() && (
+        <form onSubmit={createTrade} style={box}>
+          <h3>Create Trade</h3>
+
+          <input value={createForm.buyer_email} disabled />
+
+          <input
+            placeholder="Seller Email"
+            value={createForm.seller_email}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, seller_email: e.target.value })
+            }
+            required
+          />
+
+          <input
+            placeholder="Description"
+            value={createForm.description}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, description: e.target.value })
+            }
+            required
+          />
+
+          <input
+            type="number"
+            placeholder="Amount"
+            value={createForm.amount}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, amount: e.target.value })
+            }
+            required
+          />
+
+          <label>
+            Expected Completion Date
+            <input
+              type="date"
+              value={createForm.expected_completion_date}
+              onChange={(e) =>
+                setCreateForm({
+                  ...createForm,
+                  expected_completion_date: e.target.value,
+                })
+              }
+              required
+            />
+          </label>
+
+          <button>Create</button>
+        </form>
+      )}
+
+      {/* ================= ORIGINAL TRADES TABLE (UNCHANGED) ================= */}
+      <div style={box}>
+        <h3>All Trades</h3>
+        <table border="1" cellPadding="8" width="100%">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Buyer</th>
+              <th>Seller</th>
+              <th>Status</th>
+              <th>Expected Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {trades.map((t) => (
+              <tr key={t.id}>
+                <td>{t.id}</td>
+                <td>{t.buyer_id}</td>
+                <td>{t.seller_id}</td>
+                <td>{t.status}</td>
+                <td>
+                  {t.expected_completion_date || "-"}
+                  {t.expected_completion_date &&
+                    !t.expected_date_confirmed && (
+                      <div style={{ color: "orange", fontSize: 12 }}>
+                        Pending confirmation
+                      </div>
+                    )}
+                  {t.expected_date_confirmed && (
+                    <div style={{ color: "green", fontSize: 12 }}>
+                      Confirmed
+                    </div>
+                  )}
+                </td>
+
+                <td>
+                  {isSeller(t) &&
+                    t.expected_completion_date &&
+                    !t.expected_date_confirmed && (
+                      <button onClick={() => confirmExpectedDate(t.id)}>
+                        Confirm Expected Date
+                      </button>
+                    )}
+
+                  {isSeller(t) && t.status === "initiated" && (
+                    <>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "seller_confirmed", remarks: "" })}>Accept</button>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "rejected", remarks: "" })}>Reject</button>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "disputed", remarks: "" })}>Dispute</button>
+                    </>
+                  )}
+
+                  {isSeller(t) && t.status === "seller_confirmed" && (
+                    <>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "documents_uploaded", remarks: "" })}>Upload Documents</button>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "rejected", remarks: "" })}>Reject</button>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "disputed", remarks: "" })}>Dispute</button>
+                    </>
+                  )}
+
+                  {isAdmin() && !t.bank_id && t.status === "documents_uploaded" && (
+                    <button onClick={() => setAssign({ tradeId: t.id, bankEmail: "" })}>
+                      Assign Bank
+                    </button>
+                  )}
+
+                  {isAssignedBank(t) && t.status === "documents_uploaded" && (
+                    <button onClick={() => setRemarkModal({ tradeId: t.id, action: "bank_reviewing", remarks: "" })}>
+                      Start Review
+                    </button>
+                  )}
+
+                  {isAssignedBank(t) && t.status === "bank_reviewing" && (
+                    <>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "bank_approved", remarks: "" })}>Approve</button>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "rejected", remarks: "" })}>Reject</button>
+                      <button onClick={() => setRemarkModal({ tradeId: t.id, action: "disputed", remarks: "" })}>Dispute</button>
+                    </>
+                  )}
+
+                  {isAssignedBank(t) && t.status === "bank_approved" && (
+                    <button onClick={() => setRemarkModal({ tradeId: t.id, action: "payment_released", remarks: "" })}>
+                      Release Payment
+                    </button>
+                  )}
+
+                  {(isBuyer(t) || isSeller(t)) && t.status === "payment_released" && (
+                    <button onClick={() => setRemarkModal({ tradeId: t.id, action: "completed", remarks: "" })}>
+                      Complete Trade
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ================= TRADE HISTORY (ADDED, READ-ONLY) ================= */}
+      <div style={box}>
+        <h3>Trade History</h3>
+        <table border="1" cellPadding="8" width="100%">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Buyer</th>
+              <th>Seller</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tradeHistory.map((t) => (
+              <tr key={t.id}>
+                <td>{t.id}</td>
+                <td>{t.buyer_id}</td>
+                <td>{t.seller_id}</td>
+                <td>{t.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ================= ASSIGN BANK ================= */}
+      {assign.tradeId && (
+        <form onSubmit={assignBank} style={box}>
+          <h3>Assign Bank</h3>
+          <input
+            placeholder="Bank Email"
+            value={assign.bankEmail}
+            onChange={(e) =>
+              setAssign({ ...assign, bankEmail: e.target.value })
+            }
+            required
+          />
+          <button>Assign</button>
+        </form>
+      )}
+
+      {/* ================= REMARK MODAL ================= */}
+      {remarkModal.tradeId && (
+        <form onSubmit={submitRemarkAction} style={box}>
+          <h3>{remarkModal.action.replace("_", " ").toUpperCase()}</h3>
+          <textarea
+            placeholder="Remarks (required)"
+            value={remarkModal.remarks}
+            onChange={(e) =>
+              setRemarkModal({ ...remarkModal, remarks: e.target.value })
+            }
+            required
+          />
+          <button>Submit</button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+/* ================= DASH CARD ================= */
+function DashCard({ label, value }) {
+  return (
+    <div
+      style={{
+        minWidth: 160,
+        padding: 16,
+        borderRadius: 6,
+        background: "#f8fafc",
+        border: "1px solid #e5e7eb",
+      }}
+    >
+      <div style={{ fontSize: 12, color: "#6b7280" }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: "bold" }}>{value}</div>
+    </div>
+  );
+}
+
+const box = {
+  background: "#fff",
+  padding: 16,
+  borderRadius: 6,
+  marginBottom: 20,
+};

@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Amazon-Style E-Commerce (Demo)</title>
+  <style>
+    :root{
+      --bg:#f3f4f6; --nav:#131a22; --card:#ffffff; --muted:#6b7280; --accent:#ff9900; --accent-900:#f08800; --danger:#ef4444;
+      --shadow: 0 6px 18px rgba(16,24,40,0.08);
+      --radius:10px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:#0f172a}
+    a{color:inherit;text-decoration:none}
+    .topbar{background:var(--nav);color:white;padding:10px 16px;display:flex;align-items:center;gap:12px}
+    .logo{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:0.6px}
+    .logo .mark{background:var(--accent);color:#111;padding:6px 8px;border-radius:4px;font-weight:900}
+    .searchbar{flex:1;display:flex;align-items:center;padding:6px;border-radius:6px;background:#fff}
+    .searchbar input{flex:1;border:0;padding:10px;font-size:15px;outline:none}
+    .searchbar button{background:var(--accent);border:0;padding:10px 14px;border-radius:6px;cursor:pointer;color:#111;font-weight:700}
+    .top-actions{display:flex;gap:10px;align-items:center}
+    .top-actions .btn{color:white;background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:6px}
+    .cart-bubble{background:#f08800;color:#071022;padding:6px 8px;border-radius:8px;font-weight:700}
+
+    .wrap{display:grid;grid-template-columns:260px 1fr 360px;gap:16px;padding:18px}
+    @media (max-width:1100px){.wrap{grid-template-columns:1fr;}.cart-dock{order:2}}
+    .sidebar{background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)}
+    .category{font-weight:700;margin-bottom:8px}
+    .cat-list{display:flex;flex-direction:column;gap:8px}
+    .cat{padding:8px;border-radius:8px;cursor:pointer;border:1px solid rgba(15,23,40,0.03)}
+    .cat:hover{background:#f8fafc}
+
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .product{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+    .p-img{height:160px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8fafc}
+    .p-img img{width:100%;height:100%;object-fit:cover}
+    .thumbs-mini{display:flex;gap:6px}
+    .p-title{font-weight:700;font-size:14px}
+    .p-meta{display:flex;justify-content:space-between;align-items:center}
+    .price{font-weight:900;color:#0f172a}
+    .old{color:var(--muted);text-decoration:line-through;font-size:13px}
+    .prime{background:#e6f4ff;color:#0366d6;padding:4px 8px;border-radius:6px;font-weight:700;font-size:12px}
+    .btn-add{background:var(--accent);border:0;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:800;color:#111}
+
+    .rating{display:inline-flex;gap:6px;align-items:center;color:#b45309;font-size:13px}
+
+    .cart-dock{background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow);height:fit-content;position:sticky;top:18px}
+    .cart-list{display:flex;flex-direction:column;gap:12px;max-height:420px;overflow:auto;padding-right:6px}
+    .cart-item{display:flex;gap:8px;align-items:center}
+    .ci-thumb{width:64px;height:64px;border-radius:8px;overflow:hidden}
+    .ci-thumb img{width:100%;height:100%;object-fit:cover}
+    .cart-row{display:flex;justify-content:space-between;align-items:center}
+    .checkout{background:#16a34a;color:white;border:0;padding:10px;border-radius:8px;width:100%;font-weight:800;cursor:pointer;margin-top:10px}
+
+    .modal{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
+    .modal.show{display:flex}
+    .modal-card{background:var(--card);width:960px;max-width:100%;border-radius:12px;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .gallery{display:flex;flex-direction:column;gap:8px}
+    .gallery-main{height:420px;border-radius:8px;overflow:hidden;background:#fafafa;display:flex;align-items:center;justify-content:center}
+    .gallery-main img{width:100%;height:100%;object-fit:cover}
+    .gallery-thumbs{display:flex;gap:8px;overflow:auto}
+    .thumb-min{width:72px;height:72px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid transparent;flex:0 0 auto}
+    .thumb-min img{width:100%;height:100%;object-fit:cover}
+    .thumb-min.active{border-color:var(--accent)}
+    .p-details{display:flex;flex-direction:column;gap:10px}
+
+    .muted{color:var(--muted)}
+    .badge{background:#111827;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+    input[type="file"]{font-size:13px}
+    .small-muted{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo"><div class="mark">AMZ</div><div>Amazon-Demo</div></div>
+    <div class="searchbar">
+      <input id="search" placeholder="Search products, brands and more" />
+      <button id="search-btn">Search</button>
+    </div>
+    <div class="top-actions">
+      <div class="btn">Deliver to India</div>
+      <div class="btn">Hello, Sign in</div>
+      <div class="btn">Returns</div>
+      <div class="cart-bubble" id="top-cart">Cart: 0</div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <aside class="sidebar">
+      <div class="category">Shop by Category</div>
+      <div class="cat-list" id="cat-list"></div>
+      <hr style="margin:12px 0" />
+      <div class="category">Filters</div>
+      <div>
+        <label><input type="checkbox" id="prime-filter" /> Prime Eligible</label>
+      </div>
+      <div style="margin-top:8px">
+        <label>Max Price: <span id="price-val">₹5000</span></label>
+        <input id="price" type="range" min="100" max="10000" value="5000" />
+      </div>
+    </aside>
+
+    <section>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div><strong id="result-count">0</strong> results for <span id="q-term">All</span></div>
+        <div class="muted">Sort: <select id="sort"><option value="relevance">Relevance</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option></select></div>
+      </div>
+
+      <div class="products" id="product-grid"></div>
+    </section>
+
+    <aside class="cart-dock" id="cart">
+      <h3>Your Cart</h3>
+      <div class="cart-list" id="cart-list">
+        <div class="muted">Cart is empty — add items to get started.</div>
+      </div>
+      <div class="cart-row" style="margin-top:10px">
+        <div class="muted">Subtotal</div>
+        <div id="subtotal">₹0</div>
+      </div>
+      <button id="checkout" class="checkout">Proceed to Buy</button>
+    </aside>
+  </main>
+
+  <!-- product modal -->
+  <div id="modal" class="modal" role="dialog" aria-hidden>
+    <div class="modal-card">
+      <div class="gallery">
+        <div class="gallery-main" id="gallery-main"></div>
+        <div class="gallery-thumbs" id="gallery-thumbs"></div>
+      </div>
+      <div class="p-details">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div id="modal-title" style="font-weight:900;font-size:20px"></div>
+            <div class="muted" id="modal-cat"></div>
+          </div>
+          <div><span class="badge">In stock</span></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="rating" id="modal-rating">★★★★★ <span class="muted"> (4.5)</span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="font-size:20px;font-weight:900" id="modal-price">₹0</div>
+          <div class="muted" id="modal-old"></div>
+        </div>
+        <div id="modal-desc" class="muted">Product description will appear here.</div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button id="modal-add" class="btn-add">Add to Cart</button>
+          <button id="modal-buy" class="btn-add" style="background:#16a34a">Buy Now</button>
+        </div>
+
+        <div style="margin-top:10px">
+          <label style="font-weight:700">Upload image for this product:</label>
+          <input id="upload-input" type="file" accept="image/*" />
+          <div class="small-muted">Choose image — it will be added to the product gallery locally (stored in localStorage).</div>
+        </div>
+
+        <div style="margin-top:8px" class="muted">Free delivery on orders over ₹499</div>
+      </div>
+    </div>
+  </div>
+
+  <template id="product-card">
+    <div class="product">
+      <div class="p-img"><img /></div>
+      <div class="thumbs-mini"></div>
+      <div class="p-title"></div>
+      <div class="muted p-desc"></div>
+      <div class="p-meta">
+        <div>
+          <div class="price"></div>
+          <div class="old"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+          <div class="rating">★ <span class="muted rating-val"></span></div>
+          <div><button class="btn-add">Add</button></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    /* -------------------------
+       Helpers: placeholder + safe image setter
+       ------------------------- */
+    function placeholderDataUrl(text = 'No image') {
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'>
+        <rect width='100%' height='100%' fill='#f3f4f6'/>
+        <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='40' fill='#9ca3af'>${text}</text>
+      </svg>`;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+    function setSafeImg(imgEl, src, alt='') {
+      if(!imgEl) return;
+      imgEl.alt = alt || '';
+      imgEl.loading = 'lazy';
+      try {
+        imgEl.src = src || placeholderDataUrl(alt || 'No image');
+      } catch(e) {
+        imgEl.src = placeholderDataUrl('No image');
+      }
+      imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = placeholderDataUrl('Image failed'); };
+    }
+
+    /* -------------------------
+       Demo product data (with multiple images)
+       ------------------------- */
+    const PRODUCTS = [
+      {
+        id:1,title:'Wireless Headphones with Noise Cancellation',price:2499,old:3499,category:'Electronics',
+        imgs:[
+          'https://images.unsplash.com/photo-1518444028649-9b1dbb4e06e7?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1585386959984-a4155224a1d1?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.5,prime:true,desc:'Comfortable over-ear headphones with deep bass and long battery life.'
+      },
+      {
+        id:2,title:'Men\'s Running Shoes – Lightweight & Breathable',price:3499,old:4999,category:'Footwear',
+        imgs:[
+          'https://images.unsplash.com/photo-1528701800489-476aad4c16aa?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.3,prime:false,desc:'Cushioned running shoes designed for daily training and comfort.'
+      },
+      {
+        id:3,title:'Classic Men\'s Watch – Stainless Steel',price:1999,old:2799,category:'Accessories',
+        imgs:[
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.6,prime:true,desc:'Elegant analog watch with leather strap and water resistance.'
+      },
+      {
+        id:4,title:'Portable Bluetooth Speaker – 20W',price:1499,old:1999,category:'Electronics',
+        imgs:[
+          'https://images.unsplash.com/photo-1585386959984-a4155224a1d1?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.2,prime:false,desc:'Compact speaker with rich sound and long playtime.'
+      },
+      {
+        id:5,title:'Genuine Leather Wallet – Bifold',price:799,old:1199,category:'Accessories',
+        imgs:[
+          'https://images.unsplash.com/photo-1526178617349-1c2b1b0fdb3d?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.4,prime:true,desc:'Slim bifold wallet with multiple card slots and coin pocket.'
+      },
+      {
+        id:6,title:'Denim Jacket – Casual Fit',price:2999,old:3999,category:'Clothing',
+        imgs:[
+          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.1,prime:false,desc:'Classic denim jacket with comfortable fit.'
+      },
+      {
+        id:7,title:'Polarized Sunglasses – UV Protection',price:899,old:1299,category:'Accessories',
+        imgs:[
+          'https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.0,prime:true,desc:'Stylish sunglasses with polarized lenses for glare reduction.'
+      },
+      {
+        id:8,title:'Adjustable Smartphone Stand – Foldable',price:299,old:499,category:'Electronics',
+        imgs:[
+          'https://images.unsplash.com/photo-1588702547935-07f8282c1f3c?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.2,prime:false,desc:'Portable foldable stand for desks and travel.'
+      },
+      {
+        id:9,title:'Eco Yoga Mat – Non Slip',price:599,old:899,category:'Fitness',
+        imgs:[
+          'https://images.unsplash.com/photo-1599058917212-d750089bc07f?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.3,prime:true,desc:'Durable non-slip yoga mat made from eco-friendly materials.'
+      },
+      {
+        id:10,title:'Travel Backpack – 30L',price:1299,old:1999,category:'Bags',
+        imgs:[
+          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1542293787938-c9e299b880d8?auto=format&fit=crop&w=1200&q=80'
+        ],rating:4.5,prime:false,desc:'Spacious travel backpack with laptop sleeve and waterproof material.'
+      }
+    ];
+
+    /* -------------------------
+       State + elements
+       ------------------------- */
+    let state = { products: PRODUCTS.slice(), cart: {} };
+    let currentProductId = null;
+
+    const productGrid = document.getElementById('product-grid');
+    const template = document.getElementById('product-card');
+    const catList = document.getElementById('cat-list');
+    const resultCount = document.getElementById('result-count');
+    const qTerm = document.getElementById('q-term');
+    const topCart = document.getElementById('top-cart');
+    const cartList = document.getElementById('cart-list');
+    const subtotalEl = document.getElementById('subtotal');
+    const searchInput = document.getElementById('search');
+    const searchBtn = document.getElementById('search-btn');
+    const sortSel = document.getElementById('sort');
+    const primeFilter = document.getElementById('prime-filter');
+    const priceRange = document.getElementById('price');
+    const priceVal = document.getElementById('price-val');
+
+    // modal elements
+    const modal = document.getElementById('modal');
+    const galleryMain = document.getElementById('gallery-main');
+    const galleryThumbs = document.getElementById('gallery-thumbs');
+    const modalTitle = document.getElementById('modal-title');
+    const modalCat = document.getElementById('modal-cat');
+    const modalPrice = document.getElementById('modal-price');
+    const modalOld = document.getElementById('modal-old');
+    const modalDesc = document.getElementById('modal-desc');
+    const modalAdd = document.getElementById('modal-add');
+    const uploadInput = document.getElementById('upload-input');
+
+    /* -------------------------
+       Persistence: load/save uploaded images and cart
+       ------------------------- */
+    function loadSavedImages(){
+      try{
+        const raw = localStorage.getItem('amz_products_images');
+        if(!raw) return;
+        const pairs = JSON.parse(raw);
+        pairs.forEach(pair=>{
+          const p = PRODUCTS.find(x=>x.id===pair.id);
+          if(p && Array.isArray(pair.imgs)) {
+            // put saved imgs first so uploaded images show before externals
+            p.imgs = pair.imgs.concat(p.imgs || []);
+          }
+        });
+      }catch(e){ console.warn('loadSavedImages failed', e); }
+    }
+    function saveImagesToStorage(){
+      try{
+        const pairs = PRODUCTS.map(p=>({id:p.id, imgs: p.imgs && p.imgs.filter(i=>i && i.startsWith('data:')) || []}));
+        // only store data-URL uploads (external URLs are not stored)
+        localStorage.setItem('amz_products_images', JSON.stringify(pairs));
+      }catch(e){ console.warn('saveImagesToStorage failed', e); }
+    }
+
+    function saveCart(){
+      try{ localStorage.setItem('amz_cart', JSON.stringify(state.cart)); }catch(e){}
+    }
+    function loadCart(){
+      try{ const raw = localStorage.getItem('amz_cart'); if(raw) state.cart = JSON.parse(raw); }catch(e){}
+    }
+
+    /* -------------------------
+       Init + UI population
+       ------------------------- */
+    function init(){
+      loadSavedImages();
+      populateCategories();
+      loadCart();
+      renderProducts(state.products);
+      attachListeners();
+      renderCart();
+    }
+
+    function populateCategories(){
+      const cats = Array.from(new Set(PRODUCTS.map(p=>p.category)));
+      catList.innerHTML = '';
+      const all = document.createElement('div'); all.className='cat'; all.textContent='All'; all.addEventListener('click', ()=>{ filterByCategory('all'); }); catList.appendChild(all);
+      cats.forEach(c=>{ const el = document.createElement('div'); el.className='cat'; el.textContent=c; el.addEventListener('click', ()=> filterByCategory(c)); catList.appendChild(el); });
+    }
+
+    function filterByCategory(cat){
+      if(cat==='all'){ state.products = PRODUCTS.slice(); qTerm.textContent = 'All'; }
+      else { state.products = PRODUCTS.filter(p=>p.category===cat); qTerm.textContent = cat; }
+      applyFilters();
+    }
+
+    function attachListeners(){
+      searchBtn.addEventListener('click', onSearch);
+      searchInput.addEventListener('keyup', (e)=>{ if(e.key==='Enter') onSearch(); });
+      sortSel.addEventListener('change', applyFilters);
+      primeFilter.addEventListener('change', applyFilters);
+      priceRange.addEventListener('input', ()=>{ priceVal.textContent = '₹'+priceRange.value; applyFilters(); });
+      modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+      document.getElementById('checkout').addEventListener('click', ()=>{ if(Object.keys(state.cart).length===0){ alert('Cart is empty'); return } alert('Demo checkout — check console'); console.log(state.cart); });
+      uploadInput.addEventListener('change', handleUpload);
+    }
+
+    function onSearch(){
+      const q = searchInput.value.trim().toLowerCase();
+      if(!q){ state.products = PRODUCTS.slice(); qTerm.textContent='All'; }
+      else { state.products = PRODUCTS.filter(p=> p.title.toLowerCase().includes(q) || (p.desc && p.desc.toLowerCase().includes(q)) ); qTerm.textContent = '"'+q+'"'; }
+      applyFilters();
+    }
+
+    function applyFilters(){
+      let list = state.products.slice();
+      const maxPrice = Number(priceRange.value || 10000);
+      if(primeFilter.checked) list = list.filter(p=>p.prime);
+      list = list.filter(p=>p.price <= maxPrice);
+      const sort = sortSel.value;
+      if(sort==='price-asc') list.sort((a,b)=>a.price-b.price);
+      if(sort==='price-desc') list.sort((a,b)=>b.price-a.price);
+      renderProducts(list);
+    }
+
+    /* -------------------------
+       Render products (cards) with all images shown as mini thumbnails inside card
+       ------------------------- */
+    function renderProducts(list){
+      productGrid.innerHTML = '';
+      resultCount.textContent = list.length;
+      list.forEach(p=>{
+        const node = template.content.cloneNode(true);
+        const mainImg = node.querySelector('.p-img img');
+        setSafeImg(mainImg, (p.imgs && p.imgs[0]) || null, p.title);
+        mainImg.alt = p.title;
+
+        // thumbnails inside product card
+        const thumbsWrap = node.querySelector('.thumbs-mini');
+        thumbsWrap.innerHTML = '';
+        (p.imgs || []).forEach((s,i)=>{
+          const t = document.createElement('div');
+          t.className = 'thumb-min';
+          const img = document.createElement('img');
+          setSafeImg(img, s, p.title + ' thumb ' + (i+1));
+          img.addEventListener('click', ()=>{ setSafeImg(mainImg, s, p.title); });
+          t.appendChild(img);
+          thumbsWrap.appendChild(t);
+        });
+
+        node.querySelector('.p-title').textContent = p.title;
+        node.querySelector('.p-desc').textContent = p.desc;
+        node.querySelector('.price').textContent = '₹'+p.price.toLocaleString();
+        node.querySelector('.old').textContent = p.old ? '₹'+p.old.toLocaleString() : '';
+        node.querySelector('.rating-val').textContent = p.rating;
+        // image click -> open modal
+        mainImg.addEventListener('click', ()=> openModal(p.id));
+        // add button
+        node.querySelector('.btn-add').addEventListener('click', ()=> addToCart(p.id));
+        productGrid.appendChild(node);
+      });
+    }
+
+    /* -------------------------
+       Modal / gallery (shows product imgs; supports uploaded images)
+       ------------------------- */
+    function openModal(id){
+      currentProductId = id;
+      const p = PRODUCTS.find(x=>x.id===id);
+      if(!p) return;
+      modalTitle.textContent = p.title;
+      modalCat.textContent = p.category;
+      modalPrice.textContent = '₹'+p.price.toLocaleString();
+      modalOld.textContent = p.old ? '₹'+p.old.toLocaleString() : '';
+      modalDesc.textContent = p.desc;
+      modalAdd.onclick = ()=>{ addToCart(p.id); };
+
+      galleryMain.innerHTML = '';
+      galleryThumbs.innerHTML = '';
+      const imgs = p.imgs && p.imgs.length ? p.imgs : [null];
+      imgs.forEach((src, i)=>{
+        const big = document.createElement('img');
+        setSafeImg(big, src, p.title + ' large ' + (i+1));
+        big.style.width='100%'; big.style.height='100%'; big.style.objectFit='cover';
+        if(i===0) galleryMain.appendChild(big);
+        const t = document.createElement('div'); t.className='thumb-min' + (i===0? ' active': '');
+        const thumbImg = document.createElement('img');
+        setSafeImg(thumbImg, src, p.title + ' thumb ' + (i+1));
+        t.appendChild(thumbImg);
+        t.addEventListener('click', ()=>{ galleryMain.innerHTML=''; galleryMain.appendChild(big); galleryThumbs.querySelectorAll('.thumb-min').forEach(n=>n.classList.remove('active')); t.classList.add('active'); });
+        galleryThumbs.appendChild(t);
+      });
+
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); currentProductId = null; }
+
+    /* -------------------------
+       Upload handling: attach uploaded image to the product (local-only)
+       ------------------------- */
+    function handleUpload(ev){
+      const file = ev.target.files && ev.target.files[0];
+      if(!file || !currentProductId) { ev.target.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        const prod = PRODUCTS.find(p=>p.id===currentProductId);
+        if(!prod.imgs) prod.imgs = [];
+        // prepend so uploaded image shows first
+        prod.imgs.unshift(dataUrl);
+        // save only data:image uploads
+        saveImagesToStorage();
+        // refresh UI
+        openModal(currentProductId);
+        renderProducts(state.products);
+      };
+      reader.readAsDataURL(file);
+      ev.target.value = '';
+    }
+
+    /* -------------------------
+       Cart logic
+       ------------------------- */
+    function addToCart(id){
+      const p = PRODUCTS.find(x=>x.id===id);
+      if(!p) return;
+      if(state.cart[id]) state.cart[id].qty++;
+      else state.cart[id] = {id:p.id,title:p.title,price:p.price,qty:1,img: (p.imgs && p.imgs[0]) || null};
+      saveCart(); renderCart();
+    }
+
+    function renderCart(){
+      const items = Object.values(state.cart);
+      topCart.textContent = `Cart: ${items.reduce((s,i)=>s+i.qty,0)}`;
+      subtotalEl.textContent = '₹'+calcTotal().toLocaleString();
+      cartList.innerHTML = '';
+      if(items.length===0){ cartList.innerHTML = '<div class="muted">Cart is empty — add items to get started.</div>'; return }
+      items.forEach(it=>{
+        const div = document.createElement('div'); div.className='cart-item';
+        div.innerHTML = `
+          <div class="ci-thumb"><img /></div>
+          <div style="flex:1">
+            <div style="font-weight:700">${it.title}</div>
+            <div class="muted">₹${it.price.toLocaleString()}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:end">
+            <div style="display:flex;gap:6px;align-items:center">
+              <button data-id="${it.id}" class="dec">-</button>
+              <div>${it.qty}</div>
+              <button data-id="${it.id}" class="inc">+</button>
+            </div>
+            <button data-id="${it.id}" class="rm" style="margin-top:8px;background:transparent;border:none;color:var(--danger);cursor:pointer">Remove</button>
+          </div>
+        `;
+        const imgEl = div.querySelector('.ci-thumb img');
+        setSafeImg(imgEl, it.img, it.title);
+        cartList.appendChild(div);
+      });
+      cartList.querySelectorAll('.inc').forEach(b=>b.addEventListener('click', e=>{ const id=e.target.dataset.id; state.cart[id].qty++; saveCart(); renderCart(); }));
+      cartList.querySelectorAll('.dec').forEach(b=>b.addEventListener('click', e=>{ const id=e.target.dataset.id; if(state.cart[id].qty>1) state.cart[id].qty--; else delete state.cart[id]; saveCart(); renderCart(); }));
+      cartList.querySelectorAll('.rm').forEach(b=>b.addEventListener('click', e=>{ const id=e.target.dataset.id; delete state.cart[id]; saveCart(); renderCart(); }));
+    }
+
+    function calcTotal(){ return Object.values(state.cart).reduce((s,i)=>s + i.price * i.qty, 0); }
+
+    /* -------------------------
+       Kick off
+       ------------------------- */
+    init();
+
+    // expose closeModal to allow clicking outside
+    window.closeModal = closeModal;
+  </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+{
+  "name": "SBI",
+  "email": "sbibank@example.com",
+  "password": "1234567",
+  "org_name": "org-Bank",
+  "role": "bank"
+}
+
+{
+  "name": "Rajesh",
+  "email": "buy2@example.com",
+  "password": "1234567",
+  "org_name": "org-A",
+  "role": "corp"
+}
+
+{
+  "name": "Anusha",
+  "email": "sell2@example.com",
+  "password": "1234567",
+  "org_name": "org-A",
+  "role": "corp"
+}
+
+{
+  "email": "admin@platform.com",
+  "password": "admin123"
+}
+
+initiated
+ → seller_confirmed
+ → documents_uploaded
+ → bank_reviewing
+ → bank_approved
+ → payment_released
+ → completed
+
+{
+  "email": "sbibank@example.com",
+  "password": "1234567"
+}
+
+initiated
+→ seller_confirmed
+→ seller_docs_uploaded
+→ bank_reviewing
+→ loc_issued
+→ (valid) → bank_approved
+→ (invalid) → disputed
+→ payment_released
+→ completed
+
+
+| Area                | Score      |
+| ------------------- | ---------- |
+| Architecture        | 8/10       |
+| Business Logic      | 8/10       |
+| Workflow Automation | 4/10       |
+| Validation          | 5/10       |
+| Audit & Ledger      | 8/10       |
+| Overall             | **7.5/10** |
+
+
+Ctrl+C
+
+
+# start API
+uvicorn app.main:app --reload
+
+
+
+1. Dashboards & Analytics (Frontend + Backend)
+	•	Build risk dashboards (by counterparty, trade, org)
+	•	Ledger analytics:
+	•	Event counts (ISSUED, SHIPPED, PAID, etc.)
+	•	Timeline & status distribution
+	•	Trade summaries: volume, currency-wise totals
+	•	Backend aggregation APIs (FastAPI)
+
+
+2. Reports & Exports
+	•	CSV export:
+	•	Ledger entries
+	•	Documents with hashes
+	•	Trade transactions
+	•	Risk scores
+	•	PDF export (auditor-friendly):
+	•	Trade lifecycle summary
+	•	Ledger timeline
+	•	Hash verification status
