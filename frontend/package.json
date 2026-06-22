@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://tharunsinghalampoor.github.io/trade-finance",
+  "homepage": "https://tharunsinghalampoor.github.io/Trade-Finance",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
