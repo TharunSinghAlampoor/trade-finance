@@ -6,7 +6,7 @@ const AuthContext = createContext();
 
 // 2. Set up your API base URL (matching port 8000 for FastAPI)
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: "https://trade-finance.onrender.com",
 });
 
 export const AuthProvider = ({ children }) => {
