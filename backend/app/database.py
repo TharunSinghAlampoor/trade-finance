@@ -3,6 +3,11 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import settings
 
 # ======================================================
+# DEBUG DATABASE URL
+# ======================================================
+print("DATABASE_URL =", settings.DATABASE_URL)
+
+# ======================================================
 # DATABASE ENGINE
 # ======================================================
 engine = create_engine(
@@ -25,3 +30,14 @@ SessionLocal = sessionmaker(
 # BASE DECLARATIVE CLASS
 # ======================================================
 Base = declarative_base()
+
+
+# ======================================================
+# DATABASE DEPENDENCY
+# ======================================================
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
